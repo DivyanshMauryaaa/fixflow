@@ -3,6 +3,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html,
+body {
+  padding: 1.25rem !important;
+  margin: 0 !important;
+  overflow-x: hidden;
+}
+
+[data-headlessui-state="open"] {
+  position: relative;
+  z-index: 50;
+}
+
+.fixed {
+  position: fixed !important;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -118,6 +134,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }

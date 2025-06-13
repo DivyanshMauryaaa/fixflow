@@ -20,6 +20,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { Collapsible } from "./ui/collapsible"
+import { ThemeToggle } from "./theme-toggle"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoaded } = useUser();
@@ -158,9 +159,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SignedIn>
         <SidebarHeader>
-          <Collapsible>
+          <div className="flex justify-between">
             <p className="text-3xl font-bold">Fix<span className="text-blue-700">Flow</span></p>
-          </Collapsible>
+            <ThemeToggle />
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <NavMain items={data.navMain} />
@@ -178,6 +180,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarContent>
       </SignedOut>
     </Sidebar>
-
   )
 }

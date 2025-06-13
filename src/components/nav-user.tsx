@@ -29,6 +29,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useClerk } from "@clerk/nextjs"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function NavUser({
   user,
@@ -39,7 +41,10 @@ export function NavUser({
     avatar: string
   }
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
+
+  // Rename destructured user from useUser to clerkUser to avoid conflict
+  const { signOut } = useClerk();
 
   return (
     <SidebarMenu>
@@ -101,8 +106,8 @@ export function NavUser({
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            
+            <DropdownMenuItem onClick={() => signOut()}>
               <LogOut />
               Log out
             </DropdownMenuItem>
