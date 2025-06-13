@@ -7,8 +7,6 @@ import Link from "next/link";
 
 export default function Home() {
 
-
-
   const { user } = useUser();
 
   const name = user?.firstName;
