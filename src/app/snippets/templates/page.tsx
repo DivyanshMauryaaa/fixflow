@@ -112,7 +112,7 @@ const TemplatesPage = () => {
                 .from('snippets')
                 .select('*')
                 .eq('user_id', user?.id)
-                .is('user_id', user?.id);  // Get snippets not already in a group
+                .is('template_id', null);  // Get snippets not already in a group
 
             if (error) {
                 console.error('Error fetching snippets:', error);
