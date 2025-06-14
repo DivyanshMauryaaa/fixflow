@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
-import { Bot, FileCode2, FileText, Folder, ListTodo, TerminalSquare } from "lucide-react";
+import { FileCode2, FileText, Folder, ListTodo, TerminalSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
