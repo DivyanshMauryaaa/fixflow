@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { Raleway } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ClientWrapper } from '@/components/client-wrapper';
 import { ThemeProvider } from '@/components/theme-provider';
 
-const raleway = Raleway({ subsets: ['latin'], weight: ['400', '700'], display: 'swap' })
+const inter = Inter({ subsets: ['latin'], weight: ['400', '700'], display: 'swap' })
 
 export const metadata: Metadata = {
     title: 'FixFlow',
@@ -21,7 +21,8 @@ export default function RootLayout({
         <ClerkProvider>
             <html lang="en">
                 <body
-                    className={raleway.className + " p-5"}
+                    className={inter.className + " p-5"}
+                    suppressHydrationWarning
                     cz-shortcut-listen="false">
                     <ThemeProvider
                         attribute="class"

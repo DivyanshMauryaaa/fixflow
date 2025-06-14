@@ -80,7 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           },
           {
             title: "New Project",
-            url: "projects/new-project",
+            url: "projects/new",
           },
           {
             title: "Starred",
@@ -118,10 +118,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "All Snippets",
             url: "/snippets",
           },
-          {
-            title: "Reusable Code",
-            url: "/snippets/reusable",
-          },
+          // {
+          //   title: "Reusable Code",
+          //   url: "/snippets/reusable",
+          // },
           {
             title: "Templates",
             url: "/snippets/templates",

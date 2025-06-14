@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
-import { Folder, TerminalSquare } from "lucide-react";
+import { Bot, FileCode2, FileText, Folder, ListTodo, TerminalSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -14,14 +14,29 @@ export default function Home() {
 
   const quickLinks = [
     {
-      label: "Cloud Sandbox",
-      path: '/',
+      label: "Sandbox",
+      path: '/sandbox',
       icon: TerminalSquare
     },
     {
       label: "Projects",
-      path: '/',
+      path: '/projects',
       icon: Folder
+    },
+    {
+      label: "Snippets",
+      path: '/snippets',
+      icon: FileCode2
+    },
+    {
+      label: "Documentation",
+      path: '/docs',
+      icon: FileText
+    },
+    {
+      label: "Planner",
+      path: '/planner',
+      icon: ListTodo
     }
   ]
 
@@ -40,12 +55,20 @@ export default function Home() {
         <br />
 
         <p className="text-7xl">Hi, <span className="font-bold">{name}</span></p>
-      
-        {quickLinks.map((link: any) => (
-          <Link href={link.path} key={link.label}>
-            <div className=""></div>
-          </Link>
-        ))}
+
+        <br /><br />
+        <div className="flex gap-4 flex-wrap">
+          {quickLinks.map((link: any) => (
+            <Link href={link.path} key={link.label}>
+              <div className="border p-4 border-gray-300 rounded-lg hover:ring-2 transition-all duration-100 hover:ring-black dark:hover:ring-1 dark:hover:ring-blue-500 dark:border-gray-700 w-[300px] h-[200px]">
+                <link.icon size={45} />
+                <div>
+                  <p className="font-bold text-xl">{link.label}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
 
       </div>
 
