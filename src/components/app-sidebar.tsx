@@ -126,10 +126,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             title: "Templates",
             url: "/snippets/templates",
           },
-          {
-            title: "Commands & Scripts",
-            url: "/snippets/scripts",
-          },
+          // {
+          //   title: "Commands & Scripts",
+          //   url: "/snippets/scripts",
+          // },
           {
             title: "Pinned",
             url: "/snippets/pinned",

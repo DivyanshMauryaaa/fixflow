@@ -17,6 +17,9 @@ interface Snippet {
   code: string;
   language: string;
   created_at: string;
+  pinned: boolean;
+  color: string;
+  category: string;
 }
 
 export default function Page() {
@@ -24,10 +27,10 @@ export default function Page() {
   const { user } = useUser();
 
   const [snippets, setSnippets] = useState<Snippet[]>([]);
-  const [snippetsLoading, setInitialLoading] = useState(false);
+  const [snippetsLoading, setInitialLoading] = useState(true);
 
   const pullSnippetsFromDb = async () => {
-    setInitialLoading(true);
+    // setInitialLoading(true);
 
     const { data: recievedSnippets, error } = await supabase.from('snippets')
       .select('*')
@@ -46,12 +49,15 @@ export default function Page() {
     }
   }, [user])
 
-  const handleCreateSnippet = async (title: string, code: string, language: string) => {
+  const handleCreateSnippet = async (title: string, code: string, language: string, pinned: boolean, color?: string, category?: string) => {
     const { error } = await supabase.from('snippets').insert({
       user_id: user?.id,
       title,
       code,
       language,
+      pinned,
+      color,
+      category
     });
 
     if (error) throw error;
@@ -66,12 +72,15 @@ export default function Page() {
     pullSnippetsFromDb();
   }
 
-  const handleEditSnippet = async (id: string, title: string, code: string, language: string) => {
+  const handleEditSnippet = async (id: string, title: string, code: string, language: string, pinned: boolean, color?: string, category?: string) => {
     const { error } = await supabase.from('snippets')
       .update({
-        title: title,
-        code: code,
-        language: language,
+        title,
+        code,
+        language,
+        pinned,
+        color,
+        category,
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
@@ -123,63 +132,82 @@ export default function Page() {
 
           {/* Snippets */}
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {snippets.map((snippet: Snippet) => (
-              <Card key={snippet.id} className="transition-all duration-200 hover:shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xl font-bold flex items-center gap-2">
-                    <Trash2
-                      size={16}
-                      color="red"
-                      className="cursor-pointer"
-                      onClick={() => deleteSnippet(snippet.id)}
-                    />
-                    <SnippetDialog
-                      trigger={
-                        <Pencil
-                          size={16}
-                          className="cursor-pointer text-muted-foreground hover:text-primary"
-                        />
-                      }
-                      onSubmit={(title, code, language) =>
-                        handleEditSnippet(snippet.id, title, code, language)
-                      }
-                      mode="edit"
-                      defaultValues={{
-                        title: snippet.title,
-                        code: snippet.code,
-                        language: snippet.language
-                      }}
-                    />
-                    <p>{snippet.title}</p>
-                  </CardTitle>
-                  <Badge variant="secondary">{snippet.language}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <div className="relative">
-                    <Textarea
-                      value={snippet.code}
-                      readOnly
-                      className="min-h-[200px] cursor-pointer font-mono text-sm resize-none bg-muted"
-                    />
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="absolute top-2 right-2"
-                      onClick={() => {
-                        navigator.clipboard.writeText(snippet.code);
+            {snippets
+              .sort((a, b) => {
+                // Sort pinned snippets first
+                if (a.pinned && !b.pinned) return -1;
+                if (!a.pinned && b.pinned) return 1;
+                // Then sort by creation date
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              })
+              .map((snippet: Snippet) => (
+                <Card
+                  key={snippet.id}
+                  className={`transition-all duration-200 hover:shadow-lg max-h-[40vh] ${snippet.pinned ? 'border-2 border-primary' : ''}`}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-xl font-bold flex items-center gap-2">
+                      <Trash2
+                        size={16}
+                        color="red"
+                        className="cursor-pointer"
+                        onClick={() => deleteSnippet(snippet.id)}
+                      />
+                      <SnippetDialog
+                        trigger={
+                          <Pencil
+                            size={16}
+                            className="cursor-pointer text-muted-foreground hover:text-primary"
+                          />
+                        }
+                        onSubmit={(title, code, language, pinned) =>
+                          handleEditSnippet(snippet.id, title, code, language, pinned)
+                        }
+                        mode="edit"
+                        defaultValues={{
+                          title: snippet.title,
+                          code: snippet.code,
+                          language: snippet.language,
+                          pinned: snippet.pinned,
+                          color: snippet.color,
+                          category: snippet.category
+                        }}
+                      />
+                      <p>{snippet.title}</p>
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      {snippet.pinned && (
+                        <Badge variant="default">Pinned</Badge>
+                      )}
+                      <Badge variant="secondary">{snippet.language}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="relative">
+                      <Textarea
+                        value={snippet.code}
+                        readOnly
+                        className="min-h-[200px] max-h-[200px] overflow-y-scroll cursor-pointer font-mono text-sm resize-none bg-muted"
+                      />
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute top-2 right-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700"
+                        onClick={() => {
+                          navigator.clipboard.writeText(snippet.code);
 
-                      }}
-                    >
-                      <ClipboardIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Created {new Date(snippet.created_at).toLocaleDateString()}
-                  </div>
-                </CardContent>
-              </Card>
+                        }}
+                      >
+                        <ClipboardIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Created {new Date(snippet.created_at).toLocaleDateString()}
+                    </div>
+                  </CardContent>
+                </Card>
 
-            ))}
+              ))}
           </div>
 
         </div>
