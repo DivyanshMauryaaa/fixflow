@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, ClipboardIcon, Plus, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,8 @@ import supabase from "@/lib/db/supabase";
 import { useUser } from "@clerk/nextjs";
 import { TemplateDialog } from "@/components/templates/new-template-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from 'next/navigation';
+import { toast } from "sonner";
 
 interface Snippet {
     id: string;
@@ -18,12 +20,13 @@ interface Snippet {
     code: string;
     language: string;
     created_at: string;
-    user_id: string;  // Added this
-    template_id: string | null;  // Made nullable
+    user_id: string;
+    template_id: string | null;
     pinned: boolean;
     color: string;
     category: string;
 }
+
 interface Template {
     id: string;
     name: string;
@@ -42,7 +45,6 @@ interface TemplateGroup {
     template_id: string;
 }
 
-// Add this interface to track snippets per group
 interface GroupSnippets {
     [groupId: string]: Snippet[];
 }
@@ -59,7 +61,8 @@ const TemplatesPage = () => {
     const [userSnippets, setUserSnippets] = useState<Snippet[]>([]);
     const [groupSnippets, setGroupSnippets] = useState<GroupSnippets>({});
 
-    // Fetch all templates
+    const router = useRouter();
+
     const fetchTemplates = async () => {
         const { data, error } = await supabase
             .from('templates')
@@ -71,7 +74,6 @@ const TemplatesPage = () => {
         setLoading(false);
     };
 
-    // Fetch groups for selected template
     const fetchTemplateGroups = async (templateId: string) => {
         const { data: groupsData, error: groupsError } = await supabase
             .from('template_group')
@@ -82,44 +84,59 @@ const TemplatesPage = () => {
         if (groupsError) throw groupsError;
         setGroups(groupsData || []);
 
-        // Fetch snippets for each group
+        // Get snippets for each group
         const snippetsObj: GroupSnippets = {};
         for (const group of groupsData || []) {
-            const { data: snippetsData } = await supabase
-                .from('snippets')
-                .select('*')
-                .eq('template_id', group.id);
+            // Get snippet IDs from group_snippets table
+            const { data: groupSnippetData } = await supabase
+                .from('group_snippets')
+                .select('snippet_id')
+                .eq('group_id', group.id);
 
-            snippetsObj[group.id] = snippetsData || [];
+            if (groupSnippetData && groupSnippetData.length > 0) {
+                const snippetIds = groupSnippetData.map(gs => gs.snippet_id);
+
+                // Get actual snippets
+                const { data: snippetsData } = await supabase
+                    .from('snippets')
+                    .select('*')
+                    .in('id', snippetIds);
+
+                snippetsObj[group.id] = snippetsData || [];
+            } else {
+                snippetsObj[group.id] = [];
+            }
         }
         setGroupSnippets(snippetsObj);
     };
 
-    const fetchGroupSnippets = async (groupId: string) => {
-        const { data, error } = await supabase
-            .from('snippets')
-            .select('*')
-            .eq('template_id', groupId);
-
-        if (error) throw error;
-        setSnippets(data || []);
-    };
-
-    // Update the fetchUserSnippets function
     const fetchUserSnippets = async () => {
         try {
-            const { data, error } = await supabase
+            if (!selectedGroup) return;
+
+            // Get snippet IDs that are already in this group
+            const { data: groupSnippetData } = await supabase
+                .from('group_snippets')
+                .select('snippet_id')
+                .eq('group_id', selectedGroup);
+
+            const excludedIds = groupSnippetData?.map(gs => gs.snippet_id) || [];
+
+            // Get all user snippets
+            let query = supabase
                 .from('snippets')
                 .select('*')
                 .eq('user_id', user?.id)
-                .is('template_id', null);  // Get snippets not already in a group
+                .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Error fetching snippets:', error);
-                throw error;
+            // Exclude snippets already in this group
+            if (excludedIds.length > 0) {
+                query = query.not('id', 'in', `(${excludedIds.join(',')})`);
             }
 
-            console.log('Fetched snippets:', data); // Debug log
+            const { data, error } = await query;
+
+            if (error) throw error;
             setUserSnippets(data || []);
         } catch (error) {
             console.error('Error in fetchUserSnippets:', error);
@@ -132,7 +149,6 @@ const TemplatesPage = () => {
         }
     }, [user]);
 
-    // Load groups when template is selected
     useEffect(() => {
         if (selectedTemplate) {
             fetchTemplateGroups(selectedTemplate);
@@ -140,26 +156,55 @@ const TemplatesPage = () => {
     }, [selectedTemplate]);
 
     const addSnippetToGroup = async (snippetId: string, groupId: string) => {
-        const { error } = await supabase
-            .from('snippets')
-            .update({ template_id: groupId })
-            .eq('id', snippetId);
+        try {
+            // Just insert into group_snippets table
+            const { error } = await supabase
+                .from('group_snippets')
+                .insert({
+                    group_id: groupId,
+                    snippet_id: snippetId
+                });
 
-        if (error) throw error;
-        await fetchGroupSnippets(groupId);
-        await fetchUserSnippets();
+            if (error) throw error;
+
+            // Refresh data
+            if (selectedTemplate) {
+                await fetchTemplateGroups(selectedTemplate);
+                await fetchUserSnippets();
+            }
+        } catch (error) {
+            console.error('Error adding snippet to group:', error);
+        }
     };
 
-    // Update the group click handler to ensure snippets are loaded
+    const removeSnippetFromGroup = async (snippetId: string, groupId: string) => {
+        try {
+            const { error } = await supabase
+                .from('group_snippets')
+                .delete()
+                .eq('group_id', groupId)
+                .eq('snippet_id', snippetId);
+
+            if (error) throw error;
+
+            // Refresh data
+            if (selectedTemplate) {
+                await fetchTemplateGroups(selectedTemplate);
+                await fetchUserSnippets();
+            }
+        } catch (error) {
+            console.error('Error removing snippet from group:', error);
+        }
+    };
+
     const handleGroupClick = async (groupId: string) => {
         setSelectedGroup(groupId);
-        await fetchUserSnippets(); // Make sure to await the fetch
+        await fetchUserSnippets();
     };
 
     return (
         <div className="container mx-auto p-4">
             {selectedTemplate ? (
-                // Full Template View with its Groups
                 <div className="min-h-screen">
                     <div className="flex items-center gap-4 mb-8">
                         <Button
@@ -204,8 +249,7 @@ const TemplatesPage = () => {
                         {groups.map(group => (
                             <Card
                                 key={group.id}
-                                className={`transition-all duration-200 ${group.pinned ? 'border-2 border-primary' : ''
-                                    }`}
+                                className={`transition-all duration-200 ${group.pinned ? 'border-2 border-primary' : ''}`}
                                 style={{
                                     backgroundColor: group.color ? `${group.color}10` : undefined,
                                     borderColor: group.color || undefined
@@ -215,7 +259,16 @@ const TemplatesPage = () => {
                                 <CardHeader>
                                     <CardTitle>{group.name}</CardTitle>
                                     <CardDescription>{group.description}</CardDescription>
-                                    <Button variant={'ghost'} className="cursor-pointer" onClick={() => setIsAddingSnippets(true)}>
+                                    <Button
+                                        variant={'ghost'}
+                                        className="cursor-pointer"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedGroup(group.id);
+                                            setIsAddingSnippets(true);
+                                            fetchUserSnippets();
+                                        }}
+                                    >
                                         Add Snippet
                                     </Button>
                                 </CardHeader>
@@ -227,12 +280,34 @@ const TemplatesPage = () => {
                                                 className="p-4 bg-muted rounded-md"
                                             >
                                                 <div className="flex justify-between items-center">
-                                                    <span className="font-medium">{snippet.title}</span>
-                                                    <Badge>{snippet.language}</Badge>
+                                                    <div className="flex items-center gap-2">
+                                                        <Trash2
+                                                            color="red"
+                                                            size={16}
+                                                            className="cursor-pointer hover:opacity-70"
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                await removeSnippetFromGroup(snippet.id, group.id);
+                                                            }}
+                                                        />
+                                                        <p className="font-medium">{snippet.title}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge>{snippet.language}</Badge>
+                                                        <Copy
+                                                            size={16}
+                                                            className="cursor-pointer hover:opacity-70"
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                await navigator.clipboard.writeText(snippet.code);
+                                                                toast.success("Copied to clipboard!");
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <br />
-                                                <Textarea 
-                                                    className="min-h-[200px] overflow-y-scroll max-h-[50vh] cursor-pointer"
+                                                <Textarea
+                                                    className="min-h-[200px] font-mono overflow-y-scroll max-h-[50vh] cursor-pointer"
                                                     readOnly
                                                     value={snippet.code}
                                                 />
@@ -249,7 +324,6 @@ const TemplatesPage = () => {
                         ))}
                     </div>
 
-                    {/* Existing Add Snippets Dialog */}
                     <Dialog open={isAddingSnippets} onOpenChange={setIsAddingSnippets}>
                         <DialogContent className="max-w-3xl max-h-[80vh]">
                             <DialogHeader>
@@ -263,7 +337,7 @@ const TemplatesPage = () => {
                                     {userSnippets.length === 0 ? (
                                         <div className="text-center py-8">
                                             <p className="text-muted-foreground">
-                                                No available snippets found. Create some snippets first or they might all be already in groups.
+                                                No available snippets. All snippets might already be in this group.
                                             </p>
                                         </div>
                                     ) : (
@@ -296,7 +370,6 @@ const TemplatesPage = () => {
                     </Dialog>
                 </div>
             ) : (
-                // Templates List View
                 <div>
                     <div className="flex justify-between items-center mb-8">
                         <h1 className="text-4xl font-bold">Templates</h1>
