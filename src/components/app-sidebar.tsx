@@ -5,6 +5,7 @@ import {
   BookOpen,
   Bot,
   Folder,
+  FolderOpen,
   LayoutDashboard,
   Settings2,
 } from "lucide-react"
@@ -32,7 +33,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Make sure to extract only the properties you need
   const userData = {
-    name: user?.firstName || "Guest",
+    name: user?.fullName || "Guest",
     email: user?.primaryEmailAddress?.emailAddress || "",
     avatar: user?.imageUrl || ""
   }
@@ -69,22 +70,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
-        title: "Projects",
-        url: "/projects",
+        title: "Apps",
+        url: "/apps",
         isActive: true,
-        icon: Folder,
+        icon: FolderOpen,
         items: [
           {
-            title: "All Projects",
-            url: '/projects'
+            title: "All Apps",
+            url: '/apps'
           },
           {
-            title: "New Project",
-            url: "projects/new",
+            title: "New App",
+            url: "apps/new",
           },
           {
             title: "Starred",
-            url: "projects/starred",
+            url: "apps/starred",
           }
         ],
       },
@@ -109,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
-        title: "Snippets & Memory",
+        title: "Snippets",
         url: "/snippets",
         isActive: true,
         icon: Settings2,

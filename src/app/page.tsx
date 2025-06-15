@@ -1,13 +1,13 @@
 'use client'
 
 import Image from "next/image";
-import { useUser } from "@clerk/nextjs";
-import { FileCode2, FileText, Folder, ListTodo, TerminalSquare } from "lucide-react";
+import { useUser, useClerk } from "@clerk/nextjs";
+import { FileCode2, FileText, Folder, FolderOpen, ListTodo, TerminalSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
-
   const { user } = useUser();
+  const { openUserProfile } = useClerk();
 
   const name = user?.firstName;
   const profileImage = user?.imageUrl;
@@ -19,9 +19,9 @@ export default function Home() {
       icon: TerminalSquare
     },
     {
-      label: "Projects",
-      path: '/projects',
-      icon: Folder
+      label: "Apps",
+      path: '/apps',
+      icon: FolderOpen
     },
     {
       label: "Snippets",
@@ -49,7 +49,8 @@ export default function Home() {
           width={45}
           height={45}
           alt="You"
-          className="rounded-full"
+          className="rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => openUserProfile()}
         />
 
         <br />

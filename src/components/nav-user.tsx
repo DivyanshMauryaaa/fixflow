@@ -1,10 +1,7 @@
 "use client"
 
 import {
-  BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
   Sparkles,
 } from "lucide-react"
@@ -30,7 +27,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useClerk } from "@clerk/nextjs"
-import { ThemeToggle } from "@/components/theme-toggle"
 
 export function NavUser({
   user,
@@ -92,21 +88,13 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+            {/* <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
             </DropdownMenuGroup>
-            
+             */}
             <DropdownMenuItem onClick={() => signOut()}>
               <LogOut />
               Log out
