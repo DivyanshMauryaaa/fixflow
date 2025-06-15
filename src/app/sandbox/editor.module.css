@@ -1,0 +1,13 @@
+.editorWrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.editorWrapper :global(.monaco-editor),
+.editorWrapper :global(.monaco-editor .margin),
+.editorWrapper :global(.monaco-editor-background) {
+  background-color: transparent !important;
+    border: none;
+  outline: none;
+}
