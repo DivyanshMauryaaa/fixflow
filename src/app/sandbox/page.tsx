@@ -9,6 +9,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { Play } from "lucide-react";
 
+const encode = (str: string): string => {
+    return btoa(unescape(encodeURIComponent(str)));
+};
+
+const decode = (str: string): string => {
+    return decodeURIComponent(escape(atob(str)));
+};
+
 export default function SandboxPage() {
     const [lang, setLang] = useState("python");
     const [code, setCode] = useState(SUPPORTED_LANGUAGES[0].defaultCode);
@@ -29,7 +37,7 @@ export default function SandboxPage() {
         }
 
         try {
-            const response = await fetch("https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true", {
+            const response = await fetch("https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=true&wait=true", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -37,15 +45,20 @@ export default function SandboxPage() {
                     "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
                 },
                 body: JSON.stringify({
-                    source_code: code,
+                    source_code: encode(code),
                     language_id: selectedLang.id,
-                    stdin: input,
+                    stdin: encode(input),
                 }),
             });
 
             const data = await response.json();
 
-            const result = data.stdout || data.stderr || data.compile_output || "⚠️ No output returned.";
+            // Decode base64 responses
+            const stdout = data.stdout ? decode(data.stdout) : null;
+            const stderr = data.stderr ? decode(data.stderr) : null;
+            const compile_output = data.compile_output ? decode(data.compile_output) : null;
+
+            const result = stdout || stderr || compile_output || "⚠️ No output returned.";
             setOutput(result);
         } catch (error) {
             setOutput("❌ Error executing code. Try again.");
@@ -117,7 +130,7 @@ export default function SandboxPage() {
                 <Card className="p-5 mt-5">
                     <p className="font-mono font-bold">Terminal</p>
                     <hr />
-                    <CardContent className="font-mono text-sm p-4 min-h-[150px] min-w-[450px]">
+                    <CardContent className="font-mono text-sm p-4 min-h-[150px] min-w-[450px] whitespace-pre-wrap">
                         {output ?? "Output appears here..."}
                     </CardContent>
                 </Card>

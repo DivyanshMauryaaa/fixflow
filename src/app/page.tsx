@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useUser, useClerk } from "@clerk/nextjs";
-import { FileCode2, FileText, Folder, FolderOpen, ListTodo, TerminalSquare } from "lucide-react";
+import { BlocksIcon, FileCode2, FileText, Folder, FolderOpen, ListTodo, TerminalSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -29,9 +29,9 @@ export default function Home() {
       icon: FileCode2
     },
     {
-      label: "Documentation",
-      path: '/docs',
-      icon: FileText
+      label: "Templates",
+      path: '/snippets/templates',
+      icon: BlocksIcon
     },
     {
       label: "Planner",
@@ -46,8 +46,8 @@ export default function Home() {
       <div className="">
         <Image
           src={profileImage || "https://via.placeholder.com/300"}
-          width={45}
-          height={45}
+          width={60}
+          height={60}
           alt="You"
           className="rounded-full cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => openUserProfile()}
