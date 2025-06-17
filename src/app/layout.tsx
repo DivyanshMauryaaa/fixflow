@@ -20,16 +20,17 @@ export default function RootLayout({
 }) {
     return (
         <ClerkProvider>
-            <html lang="en">
+            <html lang="en" suppressHydrationWarning>
                 <body
                     className={inter.className + " p-5"}
                     suppressHydrationWarning
-                    cz-shortcut-listen="false">
+                >
                     <ThemeProvider
                         attribute="class"
                         defaultTheme="system"
                         enableSystem
                         disableTransitionOnChange
+                        storageKey="fixflow-theme"
                     >
                         <ClientWrapper>
                             {children}

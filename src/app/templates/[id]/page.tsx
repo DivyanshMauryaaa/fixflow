@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TemplateDialog } from "@/components/templates/new-template-dialog";
 import supabase from "@/lib/db/supabase";
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { toast } from "sonner";
 
 interface Snippet {
@@ -41,35 +41,36 @@ interface GroupSnippets {
     [groupId: string]: Snippet[];
 }
 
-export default function TemplatePage({ params }: { params: { id: string } }) {
-    const { user } = useUser();
-    const router = useRouter();
-    const [template, setTemplate] = useState<any>(null);
-    const [groups, setGroups] = useState<TemplateGroup[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isAddingSnippets, setIsAddingSnippets] = useState(false);
-    const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-    const [userSnippets, setUserSnippets] = useState<Snippet[]>([]);
-    const [groupSnippets, setGroupSnippets] = useState<GroupSnippets>({});
+export default function TemplatePage() {
+    const { id } = useParams() // Modern Next.js way to get params
+    const { user } = useUser()
+    const router = useRouter()
+    const [template, setTemplate] = useState<any>(null)
+    const [groups, setGroups] = useState<TemplateGroup[]>([])
+    const [loading, setLoading] = useState(true)
+    const [isAddingSnippets, setIsAddingSnippets] = useState(false)
+    const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
+    const [userSnippets, setUserSnippets] = useState<Snippet[]>([])
+    const [groupSnippets, setGroupSnippets] = useState<GroupSnippets>({})
 
     const fetchTemplate = async () => {
         const { data, error } = await supabase
             .from('templates')
             .select('*')
-            .eq('id', params.id)
-            .single();
+            .eq('id', id)
+            .single()
 
-        if (error) throw error;
-        setTemplate(data);
-        await fetchTemplateGroups();
-    };
+        if (error) throw error
+        setTemplate(data)
+        await fetchTemplateGroups()
+    }
 
     const fetchTemplateGroups = async () => {
         const { data: groupsData, error: groupsError } = await supabase
             .from('template_group')
             .select('*')
-            .eq('template_id', params.id)
-            .order('created_at', { ascending: false });
+            .eq('template_id', id)
+            .order('created_at', { ascending: false })
 
         if (groupsError) throw groupsError;
         setGroups(groupsData || []);
@@ -88,7 +89,7 @@ export default function TemplatePage({ params }: { params: { id: string } }) {
                     .from('snippets')
                     .select('*')
                     .in('id', snippetIds);
-                
+
                 snippetsObj[group.id] = snippetsData || [];
             } else {
                 snippetsObj[group.id] = [];
@@ -161,10 +162,10 @@ export default function TemplatePage({ params }: { params: { id: string } }) {
     };
 
     useEffect(() => {
-        if (user && params.id) {
-            fetchTemplate();
+        if (user && id) {
+            fetchTemplate()
         }
-    }, [user, params.id]);
+    }, [user, id])
 
     if (!user || !template || template.user_id !== user.id) {
         return (
@@ -172,7 +173,7 @@ export default function TemplatePage({ params }: { params: { id: string } }) {
                 <div className="text-center">
                     <p className="text-7xl">😔</p>
                     <p className="text-2xl mt-4">Template not found or access denied</p>
-                    <Button 
+                    <Button
                         className="mt-4"
                         onClick={() => router.push('/templates')}
                     >
@@ -186,12 +187,12 @@ export default function TemplatePage({ params }: { params: { id: string } }) {
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center gap-4 mb-8">
-                <Button
+                {/* <Button
                     variant="ghost"
                     onClick={() => router.push('/templates')}
                 >
                     <ArrowLeft size={20} />
-                </Button>
+                </Button> */}
                 <h1 className="text-4xl font-bold">{template.name}</h1>
             </div>
 
@@ -199,7 +200,7 @@ export default function TemplatePage({ params }: { params: { id: string } }) {
                 <TemplateDialog
                     type="group"
                     mode="create"
-                    templateId={params.id}
+                    templateId={id?.toString() || ""}
                     trigger={
                         <Button variant="secondary" className="flex gap-2">
                             <Plus size={16} /> New Group
