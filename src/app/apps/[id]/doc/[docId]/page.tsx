@@ -9,6 +9,8 @@ import Link from "next/link"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, SaveIcon, Edit2, Eye } from "lucide-react"
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 
 interface DocumentPageParams {
     id: string
@@ -119,8 +121,20 @@ export default function DocumentPage() {
                         placeholder="Enter your document content..."
                     />
                 ) : (
-                    <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto dark:prose-invert">
-                        <ReactMarkdown>{content}</ReactMarkdown>
+                    <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto dark:prose-invert whitespace-pre-wrap">
+                        <ReactMarkdown 
+                            remarkPlugins={[remarkGfm, remarkBreaks]}
+                            components={{
+                                h1: ({node, ...props}) => <h1 className="text-4xl font-bold my-4" {...props} />,
+                                h2: ({node, ...props}) => <h2 className="text-3xl font-bold my-3" {...props} />,
+                                h3: ({node, ...props}) => <h3 className="text-2xl font-bold my-2" {...props} />,
+                                h4: ({node, ...props}) => <h4 className="text-xl font-bold my-2" {...props} />,
+                                h5: ({node, ...props}) => <h5 className="text-lg font-bold my-1" {...props} />,
+                                h6: ({node, ...props}) => <h6 className="text-base font-bold my-1" {...props} />,
+                            }}
+                        >
+                            {content}
+                        </ReactMarkdown>
                     </div>
                 )}
             </div>
