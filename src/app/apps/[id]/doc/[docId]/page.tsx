@@ -7,7 +7,7 @@ import supabase from "@/lib/db/supabase"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, SaveIcon, Edit2, Eye } from "lucide-react"
+import { ArrowLeft, SaveIcon, Edit2, Eye, FileIcon } from "lucide-react"
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
@@ -79,8 +79,10 @@ export default function DocumentPage() {
 
     return (
         <div className="container mx-auto p-4 space-y-4">
+
             <div className="flex items-center justify-between p-4 border-b">
-                <h1 className="text-3xl font-bold"
+                {/* <FileIcon size={48} /> */}
+                <h1 className="text-5xl"
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={async (e) => {
@@ -112,25 +114,28 @@ export default function DocumentPage() {
                 </div>
             </div>
 
-            <div className="min-h-[500px]">
+            <div className="min-h-[500px] px-8 py-4 border border-gray-300 dark:border-gray-700 rounded-lg">
                 {mode === 'edit' ? (
                     <Textarea
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
-                        className="min-h-[500px] font-mono"
+                        className="min-h-[500px] max-h-[700px] font-mono"
                         placeholder="Enter your document content..."
                     />
                 ) : (
-                    <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto dark:prose-invert whitespace-pre-wrap">
+                    <div className="prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto dark:prose-invert whitespace-pre-wrap max-h-[700px] overflow-y-scroll">
                         <ReactMarkdown 
-                            remarkPlugins={[remarkGfm, remarkBreaks]}
+                            remarkPlugins={[remarkGfm]}
                             components={{
                                 h1: ({node, ...props}) => <h1 className="text-4xl font-bold my-4" {...props} />,
-                                h2: ({node, ...props}) => <h2 className="text-3xl font-bold my-3" {...props} />,
-                                h3: ({node, ...props}) => <h3 className="text-2xl font-bold my-2" {...props} />,
+                                h2: ({node, ...props}) => <h2 className="text-2xl font-bold my-3" {...props} />,
+                                h3: ({node, ...props}) => <h3 className="text-xl font-bold my-2" {...props} />,
                                 h4: ({node, ...props}) => <h4 className="text-xl font-bold my-2" {...props} />,
                                 h5: ({node, ...props}) => <h5 className="text-lg font-bold my-1" {...props} />,
                                 h6: ({node, ...props}) => <h6 className="text-base font-bold my-1" {...props} />,
+                                p: ({node, ...props}) => <p className="mb-4" {...props} />,
+                                br: ({node, ...props}) => <br className="mb-2" {...props} />,
+                                code: ({node, ...props}) => <code className="py-1 px-2 rounded-md bg-gray-400 text-black dark:bg-gray-800 dark:text-red-400" {...props} />,
                             }}
                         >
                             {content}

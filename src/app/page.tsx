@@ -45,7 +45,7 @@ export default function Home() {
 
       <div className="">
         <Image
-          src={profileImage || "https://via.placeholder.com/300"}
+          src={profileImage || "https://picsum.photos/60"}
           width={60}
           height={60}
           alt="You"

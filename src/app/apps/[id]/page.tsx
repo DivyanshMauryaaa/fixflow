@@ -6,7 +6,7 @@ import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Plus, Trash2 } from "lucide-react"
+import { FileIcon, Plus, Trash2 } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -209,8 +209,9 @@ export default function AppPage() {
 
     return (
         <div className="space-y-4">
-            <span className="text-7xl">{appData.name}</span>
+            <span className="text-7xl mb-3">{appData.name}</span>
 
+            <hr />
             <br /><br /><br />
 
             <section id="Templates">
@@ -296,8 +297,8 @@ export default function AppPage() {
                                 </Button>
 
                                 <Link href={`/apps/${id}/doc/${doc.id}`}>
-                                    <Button variant="secondary" className="w-full cursor-pointer">
-                                        Open Document
+                                    <Button variant="secondary" className="w-full cursor-pointer flex gap-3">
+                                        <FileIcon /> Open Document
                                     </Button>
                                 </Link>
                             </CardContent>
