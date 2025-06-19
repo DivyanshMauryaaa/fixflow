@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.21.0",
+    "@google/generative-ai": "^0.24.1",
     "@monaco-editor/react": "^4.7.0",
+    "@nanostores/react": "github:ai/react",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.3.2",

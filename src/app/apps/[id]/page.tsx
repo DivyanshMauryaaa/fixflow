@@ -6,7 +6,7 @@ import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import { FileIcon, Plus, Trash2 } from "lucide-react"
+import { FileIcon, Link2, Plus, Trash2 } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -21,6 +21,7 @@ export default function AppPage() {
     const [appData, setData] = useState<any>([])
     const [templates, setTemplates] = useState<any[]>([])
     const [availableTemplates, setAvailableTemplates] = useState<any[]>([])
+    const [availableTasks, setAvailableTasks] = useState<any>([])
     const [showTemplateDialog, setShowTemplateDialog] = useState(false)
     const { user } = useUser()
     const [loading, setLoading] = useState(true);
@@ -102,8 +103,20 @@ export default function AppPage() {
             getData()
             fetchLinkedTemplates()
             fetchDocuments()
+            getAppTasks()
         }
     }, [user, id])
+
+    const getAppTasks = async () => {
+        setLoading(true)
+        const { data, error } = await supabase.from('app_tasks')
+            .select('*')
+            .eq('app_id', id);
+
+        if (error) throw error;
+        setAvailableTasks(data);
+        setLoading(false);
+    }
 
     const removeTemplateFromApp = async (templateId: string) => {
         setLoading(true)
@@ -158,12 +171,12 @@ export default function AppPage() {
         setLoading(true)
 
         const { error } = await supabase.from('app_documents')
-        .delete()
-        .eq('id', docId)
+            .delete()
+            .eq('id', docId)
 
         if (error) alert(error);
         fetchDocuments();
-    
+
         setLoading(false)
     }
 
@@ -210,10 +223,50 @@ export default function AppPage() {
     return (
         <div className="space-y-4">
             <span className="text-7xl mb-3">{appData.name}</span>
-
+            <br />
             <hr />
-            <br /><br /><br />
 
+            <section id="Tasks">
+
+                <p className="text-4xl">Tasks</p>
+
+                <br />
+
+                <Card className="w-[70%]">
+
+                    <CardHeader>
+                        <CardTitle>All Tasks</CardTitle>
+                        <CardDescription>Tasks related to this app</CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="p-3 space-y-4 max-h-[400px] overflow-y-scroll">
+
+                        {availableTasks.map((task: any) => (
+                            <div key={task.id} className="flex justify-between p-3 border border-gray-300 rounded-lg dark:border-gray-700">
+                                <div>
+                                    <p className="font-bold">{task.title}</p>
+                                    <p className="text-gray-500 text-sm">{task.description}</p>
+                                    
+                                    <Link href={`/apps/${id}/doc/${task.doc_id}`}>
+                                        <p className="text-gray-500 mt-2 hover:text-gray-600 dark:hover:text-gray-300 flex gap-2 text-sm cursor-pointer">
+                                            <Link2 size={20} />
+                                            Linked document
+                                        </p>
+                                    </Link>
+                                </div>
+
+                                <div>
+                                    <p className="bg-gray-200 dark:bg-gray-800 py-1 px-4 rounded-sm">{task.status}</p>
+                                </div>
+                            </div>
+                        ))}
+
+                    </CardContent>
+
+                </Card>
+
+            </section>
+            <br /><br />
             <section id="Templates">
 
                 <div className="flex items-center justify-between">
@@ -287,9 +340,9 @@ export default function AppPage() {
                                 <CardTitle className="text-3xl font-normal">{doc.title}</CardTitle>
                             </CardHeader>
                             <CardContent className="flex w-full gap-2">
-                                <Button 
-                                    variant={'destructive'} 
-                                    size={"icon"} 
+                                <Button
+                                    variant={'destructive'}
+                                    size={"icon"}
                                     className="cursor-pointer"
                                     onClick={() => removeDoc(doc.id)}
                                 >

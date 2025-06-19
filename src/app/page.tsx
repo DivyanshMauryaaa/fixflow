@@ -49,7 +49,7 @@ export default function Home() {
           width={60}
           height={60}
           alt="You"
-          className="rounded-full cursor-pointer hover:opacity-80 transition-opacity"
+          className="rounded-full w-[60] h-[60] cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => openUserProfile()}
         />
 
