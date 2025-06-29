@@ -30,7 +30,7 @@ export default function DocumentPage() {
 
     const fetchDocument = async () => {
         const { data, error } = await supabase
-            .from('app_documents')
+            .from('app_docs')
             .select('*')
             .eq('id', docId)
             .single()
@@ -44,7 +44,7 @@ export default function DocumentPage() {
     const saveDocument = async () => {
         setLoading(true)
         const { error } = await supabase
-            .from('app_documents')
+            .from('app_docs')
             .update({ content })
             .eq('id', docId)
 
@@ -86,7 +86,7 @@ export default function DocumentPage() {
                     contentEditable
                     suppressContentEditableWarning
                     onBlur={async (e) => {
-                        await supabase.from('app_documents')
+                        await supabase.from('app_docs')
                             .update({
                                 title: e.target.textContent
                             }).eq('id', docId);
@@ -135,7 +135,7 @@ export default function DocumentPage() {
                                 h6: ({node, ...props}) => <h6 className="text-base font-bold my-1" {...props} />,
                                 p: ({node, ...props}) => <p className="mb-4" {...props} />,
                                 br: ({node, ...props}) => <br className="mb-2" {...props} />,
-                                code: ({node, ...props}) => <code className="py-1 px-2 rounded-md bg-gray-400 text-black dark:bg-gray-800 dark:text-red-400" {...props} />,
+                                code: ({node, ...props}) => <code className="py-1 px-2 rounded-md bg-gray-300 text-black dark:bg-gray-800 text-red-400" {...props} />,
                             }}
                         >
                             {content}

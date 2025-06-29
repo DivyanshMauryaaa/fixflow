@@ -73,27 +73,16 @@ export default function AppsPage() {
           {apps.map((app) => (
             <Card key={app.id} className="flex flex-col justify-between">
               <CardHeader>
-                <Input
-                  className="text-xl font-semibold"
-                  defaultValue={app.name}
-                  onBlur={(e) =>
-                    editApp(app.id, {
-                      name: e.target.value.trim() || 'Untitled',
-                    })
-                  }
-                />
+                <div className="text-xl font-semibold px-0 py-0 h-auto">
+                  {app.name || 'Untitled'}
+                </div>
               </CardHeader>
               <CardContent>
-                <Textarea
+                <div
                   className="resize-none"
-                  rows={3}
-                  defaultValue={app.description}
-                  onBlur={(e) =>
-                    editApp(app.id, {
-                      description: e.target.value.trim() || '',
-                    })
-                  }
-                />
+                >
+                  {app.description}
+                </div>
               </CardContent>
               <CardFooter className="flex justify-between mt-4">
                 <Button
