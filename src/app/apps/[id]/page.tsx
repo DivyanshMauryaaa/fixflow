@@ -6,7 +6,7 @@ import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Edit, FileIcon, Link2, Plus, Trash2 } from "lucide-react"
+import { Code, Edit, FileIcon, Link2, Plus, Trash2 } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -50,25 +50,23 @@ export default function AppPage() {
         setLoading(false)
     }
 
+    // Update fetchLinkedTemplates to keep both ids
     const fetchLinkedTemplates = async () => {
-        setLoading(true)
-        // Note: Based on schema, there's no app_templates table
-        // You may need to create this table or use a different approach
-        // For now, I'll comment this out
-        // /*
-        // const { data, error } = await supabase
-        //     .from('app_templates')
-        //     .select(`
-        //         template_id,
-        //         templates (*)
-        //     `)
-        //     .eq('app_id', id)
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('app_templates')
+            .select('id, template_id, templates(*)')
+            .eq('app_id', id);
 
-        // if (error) throw error
-        // setTemplates(data?.map(d => d.templates) || [])
-        // */
-        setTemplates([]) // Placeholder until app_templates table is created
-        setLoading(false)
+        if (error) throw error;
+
+        // Store both the app_templates row id and the template object
+        setTemplates((data || []).map((row: any) => ({
+            appTemplateId: row.id,
+            templateId: row.template_id,
+            ...row.templates,
+        })));
+        setLoading(false);
     }
 
     const fetchAvailableTemplates = async () => {
@@ -87,11 +85,25 @@ export default function AppPage() {
     }
 
     const linkTemplate = async (templateId: string) => {
-        // This function needs the app_templates table to be created
-        setLoading(true)
-        // Placeholder - you'll need to create app_templates table
-        setShowTemplateDialog(false)
-        setLoading(false)
+        setLoading(true);
+        try {
+            // Insert the link into app_templates
+            const { error } = await supabase
+                .from('app_templates')
+                .insert({
+                    app_id: id,
+                    template_id: templateId,
+                });
+
+            if (error) throw error;
+
+            // Optionally, refresh the linked templates list
+            await fetchLinkedTemplates();
+            setShowTemplateDialog(false);
+        } catch (err: any) {
+            alert("Failed to link template: " + err.message);
+        }
+        setLoading(false);
     }
 
     useEffect(() => {
@@ -128,12 +140,14 @@ export default function AppPage() {
         setLoading(false);
     }
 
-    const removeTemplateFromApp = async (templateId: string) => {
-        // This function needs the app_templates table to be created
-        setLoading(true)
-        // Placeholder - you'll need to create app_templates table
-        await fetchLinkedTemplates()
-        setLoading(false)
+    // Update removeTemplateFromApp to use both ids for safety
+    const removeTemplateFromApp = async (appTemplateId: string) => {
+        setLoading(true);
+        await supabase.from('app_templates')
+            .delete()
+            .eq('id', appTemplateId);
+        await fetchLinkedTemplates();
+        setLoading(false);
     }
 
     const fetchDocuments = async () => {
@@ -298,6 +312,107 @@ export default function AppPage() {
             <br />
             <hr />
 
+            <section className="">
+                <div className="text-4xl flex justify-between w-full">
+                    Documents
+                    <Button className="flex gap-2" onClick={addDocument}>
+                        <Plus /> Add Document
+                    </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-b py-4">
+                    {availableDocuments.map((doc: any) => (
+                        <Card key={doc.id}>
+                            <CardHeader>
+                                <FileIcon size={20} />
+                                {doc.title?.toLowerCase().includes("setup") ? <Badge>Setup</Badge> : ""}
+                                {doc.title?.toLowerCase().includes("changelog") ? <Badge>Changelog</Badge> : ""}
+                                {doc.title?.toLowerCase().includes("update") ? <Badge>Update</Badge> : ""}
+                                <CardTitle className="text-3xl font-normal">{doc.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex w-full gap-2">
+                                <Button
+                                    variant={'ghost'}
+                                    size={"icon"}
+                                    className="cursor-pointer"
+                                    onClick={() => removeDoc(doc.id)}
+                                >
+                                    <Trash2 className="text-red-600" />
+                                </Button>
+
+                                <Link href={`/apps/${id}/doc/${doc.id}`}>
+                                    <Button variant="secondary" className="w-full cursor-pointer flex gap-3">
+                                        <FileIcon /> Open Document
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </section>
+            <br /><br />
+
+            <section id="Templates">
+                <div className="flex items-center justify-between">
+                    <p className="text-4xl">Code Templates</p>
+                    <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+                        <DialogTrigger asChild>
+                            <Button onClick={fetchAvailableTemplates}>
+                                <Plus className="mr-2 h-4 w-4" /> Link Template
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Link Template</DialogTitle>
+                            </DialogHeader>
+                            <div className="grid gap-4">
+                                {availableTemplates.map(template => (
+                                    <div
+                                        key={template.id}
+                                        className="p-4 border rounded-lg cursor-pointer hover:bg-muted"
+                                        onClick={() => linkTemplate(template.id)}
+                                    >
+
+                                        <h3 className="font-semibold flex gap-3">{template.name}</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {template.description}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-b py-4">
+                    {templates.map(template => (
+                        <Card key={template.appTemplateId}>
+                            <CardHeader>
+                                <Code size={20} />
+                                <CardTitle>{template.name}</CardTitle>
+                                <CardDescription>{template.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex w-full gap-2">
+                                <Button
+                                    variant={'destructive'}
+                                    size={"icon"}
+                                    className="cursor-pointer"
+                                    onClick={() => removeTemplateFromApp(template.appTemplateId)}
+                                >
+                                    <Trash2 />
+                                </Button>
+                                <Link href={`/templates/${template.id}`}>
+                                    <Button variant="secondary" className="w-full cursor-pointer">
+                                        Open Template
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </section>
+
             <section id="ideas">
                 {/* <p className="text-4xl">Ideas & Features</p> */}
                 <br />
@@ -421,100 +536,6 @@ export default function AppPage() {
                         ))}
                     </CardContent>
                 </Card>
-            </section>
-            <br /><br />
-
-            <section id="Templates">
-                <div className="flex items-center justify-between">
-                    <p className="text-4xl">Code Templates</p>
-                    <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-                        <DialogTrigger asChild>
-                            <Button onClick={fetchAvailableTemplates}>
-                                <Plus className="mr-2 h-4 w-4" /> Link Template
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Link Template</DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-4">
-                                {availableTemplates.map(template => (
-                                    <div
-                                        key={template.id}
-                                        className="p-4 border rounded-lg cursor-pointer hover:bg-muted"
-                                        onClick={() => linkTemplate(template.id)}
-                                    >
-                                        <h3 className="font-semibold flex gap-3">{template.name}</h3>
-                                        <p className="text-sm text-muted-foreground">
-                                            {template.description}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-b py-4">
-                    {templates.map(template => (
-                        <Card key={template.id}>
-                            <CardHeader>
-                                <CardTitle>{template.name}</CardTitle>
-                                <CardDescription>{template.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex w-full gap-2">
-                                <Button variant={'destructive'} size={"icon"} className="cursor-pointer">
-                                    <Trash2 onClick={() => removeTemplateFromApp(template.id)} />
-                                </Button>
-
-                                <Link href={`/templates/${template.id}`}>
-                                    <Button variant="secondary" className="w-full cursor-pointer">
-                                        Open Template
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </section>
-
-            <section className="">
-                <div className="text-4xl flex justify-between w-full">
-                    Documents
-                    <Button className="flex gap-2" onClick={addDocument}>
-                        <Plus /> Add Document
-                    </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-b py-4">
-                    {availableDocuments.map((doc: any) => (
-                        <Card key={doc.id}>
-                            <CardHeader>
-                                {doc.title?.toLowerCase().includes("setup") ? <Badge>Setup</Badge> : ""}
-                                {doc.title?.toLowerCase().includes("changelog") ? <Badge>Changelog</Badge> : ""}
-                                {doc.title?.toLowerCase().includes("update") ? <Badge>Update</Badge> : ""}
-                                
-                                <CardTitle className="text-3xl font-normal">{doc.title}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex w-full gap-2">
-                                <Button
-                                    variant={'ghost'}
-                                    size={"icon"}
-                                    className="cursor-pointer"
-                                    onClick={() => removeDoc(doc.id)}
-                                >
-                                    <Trash2 className="text-red-600" />
-                                </Button>
-
-                                <Link href={`/apps/${id}/doc/${doc.id}`}>
-                                    <Button variant="secondary" className="w-full cursor-pointer flex gap-3">
-                                        <FileIcon /> Open Document
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
             </section>
 
             {/* Add Idea Dialog */}
